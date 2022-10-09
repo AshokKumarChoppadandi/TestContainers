@@ -1,0 +1,38 @@
+version: '3.5'
+services:
+  zookeeper:
+    image: ashokkumarchoppadandi/confluent-kafka:5.5.3
+    command:
+      - zookeeper
+      - standalone
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+  broker:
+    image: ashokkumarchoppadandi/confluent-kafka:5.5.3
+    depends_on:
+      - zookeeper
+    hostname: broker
+    command: kafka
+    environment:
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_LISTENERS: INTERNAL:\/\/0.0.0.0:9092,EXTERNAL:\/\/0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL:\/\/broker:9092,EXTERNAL:\/\/localhost:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      ZOOKEEPER_CONNECT_LIST: "zookeeper:2181"
+    ports:
+      - "29092:29092"
+  schemaregistry:
+    image: ashokkumarchoppadandi/confluent-kafka:5.5.3
+    depends_on:
+      - zookeeper
+      - broker
+    hostname: schemaregistry
+    environment:
+      SCHEMA_REGISTRY_LISTENERS: http:\/\/0.0.0.0:8081
+      KAFKASTORE_BOOTSTRAP_SERVERS: "broker:9092"
+      KAFKASTORE_TOPIC: "_schemas"
+      DEBUG: "true"
+    command: schemaregistry
+    ports:
+      - "8081:8081"
