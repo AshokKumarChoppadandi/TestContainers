@@ -8,7 +8,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable.ListBuffer
 
-case class Employee(id: Int, name: String, salary: Int, dept: Int)
+case class Employees(id: Int, name: String, salary: Int, dept: Int)
 
 class MysqlSpec extends AnyFlatSpec with ForAllTestContainer with BeforeAndAfterAll {
 
@@ -68,10 +68,10 @@ class MysqlSpec extends AnyFlatSpec with ForAllTestContainer with BeforeAndAfter
     val queryResult = statement1.executeQuery()
 
     assert(queryResult != null)
-    val employees = ListBuffer[Employee]()
+    val employees = ListBuffer[Employees]()
     while (queryResult.next) {
       employees.append(
-        Employee(
+        Employees(
           id = queryResult.getInt(1),
           name = queryResult.getString(2),
           salary = queryResult.getInt(3),

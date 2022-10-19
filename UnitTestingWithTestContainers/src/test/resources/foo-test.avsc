@@ -1,0 +1,9 @@
+{
+  "type":"record",
+  "name":"Foo",
+  "namespace":"com.bigdata.kafka.foo",
+  "fields":[
+    {"name":"f1","type":"string"}
+  ],
+  "doc":"Foo Details"
+}
