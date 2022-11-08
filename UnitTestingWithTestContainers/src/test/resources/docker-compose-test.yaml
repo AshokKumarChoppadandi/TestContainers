@@ -36,3 +36,29 @@ services:
     command: schemaregistry
     ports:
       - "8081:8081"
+  ksql:
+    image: ashokkumarchoppadandi/confluent-kafka:5.5.3
+    depends_on:
+      - zookeeper
+      - broker
+      - schemaregistry
+    hostname: ksql
+    environment:
+      BOOTSTRAP_SERVERS: "broker:9092"
+      KSQL_DB_LISTENERS: http:\/\/0.0.0.0:8088
+      KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+      KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_LOGGING_PROCESSING_ROWS_INCLUDE: "true"
+      KSQL_SCHEMA_REGISTRY_URL: http:\/\/schemaregistry:8081
+      UI_ENABLED: "true"
+      KSQL_STREAMS_AUTO_OFFSET_RESET: latest
+      KSQL_STREAMS_COMMIT_INTERVAL_MS: 2000
+      KSQL_STREAMS_CACHE_MAX_BYTES_BUFFERING: 10000000
+      KSQL_FAIL_ON_DESERIALIZATION_ERROR: "true"
+      KSQL_STREAMS_NUM_STREAM_THREADS: 1
+      KSQL_SERVICE_ID: default_
+      KSQL_SINK_PARTITIONS: 4
+      KSQL_SINK_REPLICAS: 1
+    ports:
+      - "8088:8088"
+    command: ksql

@@ -2,6 +2,8 @@ package com.bigdata.testcontainers
 
 import com.bigdata.kafka.Employee
 import com.bigdata.testcontainers.DockerComposeConstants._
+import com.dimafeng.testcontainers
+
 import java.io.File
 import java.util.Properties
 import com.dimafeng.testcontainers.{DockerComposeContainer, ExposedService, ForAllTestContainer}
@@ -22,7 +24,8 @@ class DockerComposeSpec extends AnyFlatSpec with ForAllTestContainer with Before
     exposedServices = Seq(
       ExposedService(ZOOKEEPER_CONTAINER_NAME, ZOOKEEPER_PORT, WAIT_STRATEGY),
       ExposedService(KAFKA_BROKER_CONTAINER_NAME, KAFKA_BROKER_PORT, WAIT_STRATEGY),
-      ExposedService(SCHEMA_REGISTRY_CONTAINER_NAME, SCHEMA_REGISTRY_PORT, WAIT_STRATEGY)
+      ExposedService(SCHEMA_REGISTRY_CONTAINER_NAME, SCHEMA_REGISTRY_PORT, WAIT_STRATEGY),
+      ExposedService(KSQL_CONTAINER_NAME, KSQL_PORT, WAIT_STRATEGY)
     ),
     localCompose = false,
     pull = true
@@ -171,6 +174,24 @@ class DockerComposeSpec extends AnyFlatSpec with ForAllTestContainer with Before
 
     val result = emp3.consumeAvroData(getAvroConsumerProperties, KAFKA_TOPIC_NAME_3)
     assert(result.nonEmpty && 5 == result.size)
+  }
+
+  "DockerComposeContainer" should "consume ksql datagen avro messages from kafka topic" in {
+    val kafkaTopicName = "employees-ksql"
+    val emp4 = new Employee(getAvroProducerProperties, KSQL_DATAGEN_SCHEMA_FILE_PATH_IN_HOST, TEST_DATA_JSON_FILE, kafkaTopicName)
+    val containerState = container.getContainerByServiceName(KSQL_CONTAINER_NAME).get
+    containerState.copyFileToContainer(MountableFile.forHostPath(Paths.get(KSQL_DATAGEN_SCHEMA_FILE_PATH_IN_HOST)), KSQL_DATAGEN_SCHEMA_FILE_INSIDE_CONTAINER)
+    containerState.execInContainer(
+      generateDataUsingKsqlDataGen(
+        schemaFile = KSQL_DATAGEN_SCHEMA_FILE_INSIDE_CONTAINER,
+        topicName = kafkaTopicName,
+        key = "eid",
+        numberOfMessages = 20
+      ): _*)
+
+    val result = emp4.consumeAvroData(getAvroConsumerProperties, kafkaTopicName)
+    result.foreach(println)
+    assert(result.nonEmpty && 20 == result.size)
   }
 
   override def afterAll(): Unit = {
